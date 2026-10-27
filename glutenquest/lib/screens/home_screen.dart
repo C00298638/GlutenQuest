@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'quiz_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -128,7 +129,14 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const QuizScreen(),
+                          ),
+                        );
+                      },
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: green,
