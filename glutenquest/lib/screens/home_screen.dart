@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'quiz_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,13 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: green,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
             icon: const Icon(Icons.account_circle_outlined),
             tooltip: 'Profile',
           ),
