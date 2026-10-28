@@ -1,9 +1,17 @@
 
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const GlutenQuestApp());
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://zbpsknmncedodfxvozts.supabase.co', // Replace with your Supabase URL
+    publishableKey: 'sb_publishable_2ApAmKsx2wJrxs-Mn0OAwA_c3Lll9JT',
+   );
+   runApp(const GlutenQuestApp());
 }
 
 class GlutenQuestApp extends StatelessWidget {

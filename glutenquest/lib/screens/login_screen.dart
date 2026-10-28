@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+bool _isLoading = false;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,17 +27,56 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
+        ),
+      );
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to log in. Please check your connection and try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
+
 
   void _openSignUp() {
     Navigator.of(context).push(
@@ -254,21 +296,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: darkGreen,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Log In',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Log In',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 

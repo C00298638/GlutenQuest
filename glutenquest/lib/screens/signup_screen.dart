@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -19,6 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,19 +31,83 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _signup() {
-    if (!_formKey.currentState!.validate()) {
+ 
+Future<void> _signup() async {
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    final response = await Supabase.instance.client.auth.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      data: {
+        'full_name': _nameController.text.trim(),
+      },
+    );
+
+    if (!mounted) return;
+
+    if (response.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account creation failed. Please try again.'),
+        ),
+      );
       return;
     }
+
+    final requiresEmailConfirmation =
+        response.session == null;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          requiresEmailConfirmation
+              ? 'Account created! Check your email to confirm your account.'
+              : 'Account created successfully!',
+        ),
+      ),
+    );
+
+    if (!requiresEmailConfirmation) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
+      );
+    }
+  } on AuthException catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.message),
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Sign up UI complete! Account creation will be added later.',
+          'Something went wrong. Please try again.',
         ),
       ),
     );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
+}
+
 
   void _goToLogin() {
     Navigator.of(context).pushReplacement(
@@ -280,7 +346,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 SizedBox(
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _signup,
+                   onPressed: _isLoading ? null : _signup,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: darkGreen,
                       foregroundColor: Colors.white,
@@ -288,13 +354,22 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Account',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 
