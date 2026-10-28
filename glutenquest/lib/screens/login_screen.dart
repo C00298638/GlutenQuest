@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,9 +37,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _openSignUp() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registration screen coming next!'),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const SignupScreen(),
       ),
     );
   }
