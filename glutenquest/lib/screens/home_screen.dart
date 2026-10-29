@@ -1,12 +1,44 @@
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'quiz_screen.dart';
 import 'profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const Color green = Color(0xFF23845B);
+
+  late Future<String?> _profileNameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileNameFuture = _loadProfileName();
+  }
+
+  Future<String?> _loadProfileName() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      return null;
+    }
+
+    final profile = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    return profile?['full_name'] as String?;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +46,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'GlutenQuest',
-          style: TextStyle(fontWeight: FontWeight.bold), 
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: green,
@@ -35,12 +67,41 @@ class HomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'Ready for a new challenge?',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),
+          FutureBuilder<String?>(
+            future: _profileNameFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text(
+                  'Welcome to GlutenQuest!',
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text(
+                  'Loading your profile...',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }
+
+              final name = snapshot.data;
+
+              return Text(
+                name != null && name.isNotEmpty
+                    ? 'Welcome, $name!'
+                    : 'Welcome to GlutenQuest!',
+                style: const TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           const Text(
@@ -57,14 +118,11 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'LEVEL 1',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text('0 / 100 XP'),
                     ],
